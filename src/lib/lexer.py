@@ -35,34 +35,36 @@ class Lexer:
                 
             # Handling operators:
             elif self.current_char == '+':
-                tokens.append(Token(TT_PLUS))
+                tokens.append(Token(TT_PLUS, loc_start=self.loc))
                 self.advance()
             elif self.current_char == '-':
-                tokens.append(Token(TT_MINUS))
+                tokens.append(Token(TT_MINUS, loc_start=self.loc))
                 self.advance()
             elif self.current_char == '*':
-                tokens.append(Token(TT_MUL))
+                tokens.append(Token(TT_MUL, loc_start=self.loc))
                 self.advance()
             elif self.current_char == '/':
-                tokens.append(Token(TT_DIV))
+                tokens.append(Token(TT_DIV, loc_start=self.loc))
                 self.advance()
             elif self.current_char == '(':
-                tokens.append(Token(TT_LPAREN))
+                tokens.append(Token(TT_LPAREN, loc_start=self.loc))
                 self.advance()
             elif self.current_char == ')':
-                tokens.append(Token(TT_RPAREN))
+                tokens.append(Token(TT_RPAREN, loc_start=self.loc))
                 self.advance()
             else:
                 loc_start = self.loc.copy()
                 char = self.current_char
                 self.advance()
                 return [], IllegalCharError(f"'{char}'", loc_start, self.loc)
-            
+        
+        tokens.append(Token(TT_EOF))
         return tokens, None
                 
     def make_number(self) -> Token:
         num_str = ''
         dot_count = 0
+        loc_start = self.loc.copy()
         
         while self.current_char and self.current_char in DIGITS + '.':
             if self.current_char == '.':
@@ -74,7 +76,7 @@ class Lexer:
             self.advance()
                 
         if dot_count:
-            return Token(TT_FLOAT, float(num_str))
+            return Token(TT_FLOAT, float(num_str), loc_start, self.loc)
         else:
-            return Token(TT_INT, int(num_str))
+            return Token(TT_INT, int(num_str), loc_start, self.loc)
         

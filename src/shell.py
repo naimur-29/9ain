@@ -2,6 +2,8 @@ from typing import Tuple
 
 from .lib.parser import *
 from .lib.lexer import *
+from .lib.interpreter import *
+from .lib.context import *
    
 #############################################
 # RUN
@@ -16,5 +18,11 @@ def run(file_name, text) -> Tuple[BinaryOperatorNode, Error]:
     # Generate Abstract Syntax Tree:
     parser = Parser(tokens)
     ast = parser.parse()
+    if ast.error: return None, ast.error
 
-    return ast, None
+    # Run program (INTERPRETER):
+    interpreter = Interpreter()
+    context = Context('<9gram>')
+    res = interpreter.visit(ast.node, context)
+
+    return res.value, res.error
