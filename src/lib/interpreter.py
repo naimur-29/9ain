@@ -60,6 +60,10 @@ class Number:
                 )
             return Number(self.value / other.value).set_context(self.context), None
         
+    def powered_by(self, other):
+        if isinstance(other, Number):
+            return Number(self.value ** other.value).set_context(self.context), None
+        
     def __repr__(self) -> str:
         return str(self.value)
 
@@ -96,6 +100,8 @@ class Interpreter:
             result, error = left.multiplied_by(right)
         elif node.operator_token.type == TT_DIV:
             result, error = left.divided_by(right)
+        elif node.operator_token.type == TT_POW:
+            result, error = left.powered_by(right)
             
         if error:
             return res.failure(error)

@@ -55,19 +55,11 @@ class Parser:
         return res
     
     # Grammar rules:
-    def factor(self) -> NumberNode:
+    def atom(self) -> NumberNode:
         res = ParseResult()
         token = self.current_token
         
-        if token.type in (TT_PLUS, TT_MINUS):
-            res.register(self.advance())
-            factor = res.register(self.factor())
-            if res.error: return res
-            return res.success(
-                UnaryOperatorNode(token, factor)
-            )
-        
-        elif token.type in (TT_INT, TT_FLOAT):
+        if token.type in (TT_INT, TT_FLOAT):
             res.register(self.advance())
             return res.success(NumberNode(token))
         
@@ -79,13 +71,34 @@ class Parser:
                 res.register(self.advance())
                 return res.success(expr)
             else:
+                print("----------------------------")
+                print(type(token))
                 return res.failure(InvalidSyntaxError(
                     "Expected ')'", self.current_token.loc_start, self.current_token.loc_end
                 ))
+                
+        return res.failure(
+                InvalidSyntaxError(
+                    "Expected '+', '-', '*' or '/'", token.loc_start, token.loc_end
+                )
+            )
         
-        return res.failure(InvalidSyntaxError(
-            "Expected INT or FLOAT!", token.loc_start, token.loc_end
-        ))
+    def power(self) -> BinaryOperatorNode:
+        return self.binary_operation(self.atom, (TT_POW, ), self.factor)
+    
+    def factor(self) -> BinaryOperatorNode:
+        res = ParseResult()
+        token = self.current_token
+        
+        if token.type in (TT_PLUS, TT_MINUS):
+            res.register(self.advance())
+            factor = res.register(self.factor())
+            if res.error: return res
+            return res.success(
+                UnaryOperatorNode(token, factor)
+            )
+        
+        return self.power()
 
     def term(self) -> BinaryOperatorNode:
         return self.binary_operation(self.factor, (TT_MUL, TT_DIV))
@@ -93,15 +106,18 @@ class Parser:
     def expr(self) -> BinaryOperatorNode:
         return self.binary_operation(self.term, (TT_PLUS, TT_MINUS))
     
-    def binary_operation(self, func, operations) -> BinaryOperatorNode:
+    def binary_operation(self, func_a, operations, func_b=None) -> BinaryOperatorNode:
+        if not func_b:
+            func_b = func_a
+        
         res = ParseResult()
-        left = res.register(func())
+        left = res.register(func_a())
         if res.error: return res
 
         while self.current_token.type in operations:
             operator_token = self.current_token
             res.register(self.advance())
-            right = res.register(func())
+            right = res.register(func_b())
             if res.error: return res
             left = BinaryOperatorNode(left, operator_token, right)
             
